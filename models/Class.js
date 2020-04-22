@@ -29,7 +29,13 @@ module.exports = (sequelize, DataTypes) => {
   Class.associate = (models) => {
     Class.hasMany(models.User, {
       foreignKey: 'classId',
+      as: 'members',
     });
+
+    Class.hasMany(models.Post, {
+      foreignKey: 'classId',
+      as: 'feed',
+    })
   };
   return Class;
 };
