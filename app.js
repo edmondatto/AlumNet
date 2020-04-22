@@ -4,14 +4,18 @@ const bodyParser = require('body-parser');
 
 const app = express();
 const models = require('./models');
-const { authController } = require('./controllers');
 
+// API Router Import
+const { authRouter } = require('./routes');
+
+// Application Level Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: 'false'}));
 
-app.get('/', (r, rs) => rs.send('Welcome'));
-app.post('/register', authController.registerUser);
+// API Routes
+app.use('/auth', authRouter);
 
+// Start API Server
 models.sequelize.sync({force: true}).then(() =>
   app.listen(process.env.PORT_NUMBER, () => {
     console.log(`Listening on Port ${process.env.PORT_NUMBER}..`)
