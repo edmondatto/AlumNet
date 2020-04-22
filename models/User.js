@@ -76,6 +76,28 @@ module.exports = (sequelize, DataTypes) => {
 
   User.associate = (models) => {
     User.belongsTo(models.Class);
+
+    User.hasMany(models.Post, {
+      foreignKey: 'authorId',
+      as: 'author',
+    });
+
+    User.hasMany(models.Comment, {
+      foreignKey: 'authorId',
+    });
+
+    User.belongsTo(models.Profession, {
+      foreignKey: 'professionId',
+    });
+
+    User.belongsToMany(models.Skill, {
+      through: 'userSkills'
+    });
+
+    User.hasMany(models.Event, {
+      foreignKey: 'ownerId',
+      as: 'owner',
+    });
   };
 
   return User;
