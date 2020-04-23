@@ -1,22 +1,21 @@
 module.exports = (sequelize, DataTypes) => {
   const Class = sequelize.define('class', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      autoIncrement: false,
+      primaryKey: true,
+    },
+
     year: {
-      type: DataTypes.STRING(4),
+      type: DataTypes.INTEGER,
       allowNull: false,
       unique: true,
-      validate: {
-        isInt: {
-          args: true,
-          msg: 'Must be a number'
-        },
-        len: {
-          args: 4,
-          msg: 'Must be a length of 4 numbers'
-        }
-      }
     },
-    image: {
+
+    imageUrl: {
       type: DataTypes.STRING,
+      field: 'image_url',
       validate: {
         isUrl: {
           args: true,
