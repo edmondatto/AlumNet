@@ -1,21 +1,21 @@
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('user', {
-    authId: {
+    id: {
       type: DataTypes.STRING,
-      field: 'auth_id',
-      unique: true,
+      autoIncrement: false,
+      primaryKey: true,
     },
     firstName: {
       type: DataTypes.STRING,
-      field: 'first_name'
-    },
-    classUpdatedOn: {
-      type: DataTypes.STRING,
-      field: 'class_updated_on',
+      field: 'first_name',
     },
     lastName: {
       type: DataTypes.STRING,
       field: 'last_name',
+    },
+    username: {
+      type: DataTypes.STRING,
+      unique: true,
     },
     email: {
       type: DataTypes.STRING,
@@ -27,10 +27,6 @@ module.exports = (sequelize, DataTypes) => {
           msg: "Must be a valid email address",
         },
       }
-    },
-    username: {
-      type: DataTypes.STRING,
-      unique: true,
     },
     avatarUrl: {
       type: DataTypes.STRING,
@@ -72,7 +68,11 @@ module.exports = (sequelize, DataTypes) => {
     telephoneNumber: {
       type: DataTypes.INTEGER,
       field: 'telephone_number'
-    }
+    },
+    classUpdatedOn: {
+      type: DataTypes.STRING,
+      field: 'class_updated_on',
+    },
   });
 
   User.associate = (models) => {
