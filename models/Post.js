@@ -19,7 +19,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
       field: 'is_public',
-    }
+    },
+    isEdited: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: 'is_edited',
+    },
   });
 
   Post.associate = (models) => {
