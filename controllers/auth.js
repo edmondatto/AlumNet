@@ -32,7 +32,7 @@ module.exports = {
         // TODO: Possibly use userRecord.uid as PK in User Model
         const newUser = await User.create({
           email,
-          authId: userRecord.uid
+          id: userRecord.uid
         });
 
         response.status(201).send({
@@ -40,7 +40,7 @@ module.exports = {
           msg: 'User registered successfully',
           user: {
             email: newUser.email,
-            id: newUser.authId,
+            id: newUser.id,
             created_at: newUser.createdAt
           }
         });
@@ -84,5 +84,7 @@ module.exports = {
         msg: 'Email and password are both required'
       })
     }
-  }
+  },
+
+  admin,
 };
