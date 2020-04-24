@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const { User, Post } = require('../models');
 
 module.exports = {
   async fetchAll (request, response) {
@@ -26,11 +26,18 @@ module.exports = {
     const { userIdentifier } = request.params;
     const findUserById = !userIdentifier.startsWith('@');
 
+    const userQueryOptions = {
+      include:[{
+        model: Post,
+        attributes: ['id', 'content', 'createdAt'],
+      }]
+    };
+
     try {
       let user;
 
       if (findUserById) {
-        user = await User.findByPk(userIdentifier);
+        user = await User.findByPk(userIdentifier, userQueryOptions);
       } else if (userIdentifier.substring(1).length === 0) {
         return response.status(400).send({
           status: 400,
@@ -38,6 +45,7 @@ module.exports = {
         });
       } else {
         user = await User.findOne({
+          ...userQueryOptions,
           where: {
             username: userIdentifier.substring(1)
           },
@@ -101,7 +109,6 @@ module.exports = {
       return response.status(500).send({
         status: 500,
         msg: 'Internal server error',
-        error
       });
     }
   },
