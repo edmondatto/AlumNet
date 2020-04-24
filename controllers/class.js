@@ -94,7 +94,7 @@ module.exports = {
       });
 
       return response.status(200).send({
-        status: 201,
+        status: 200,
         msg: 'Classes retrieved successfully',
         totalCount,
         classes
@@ -116,7 +116,7 @@ module.exports = {
 
       if (classEntity) {
         return response.status(200).send({
-          status: 201,
+          status: 200,
           msg: 'Class retrieved successfully',
           class: classEntity
         });
