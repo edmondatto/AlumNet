@@ -5,18 +5,22 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: false,
       primaryKey: true,
     },
+
     firstName: {
       type: DataTypes.STRING,
       field: 'first_name',
     },
+
     lastName: {
       type: DataTypes.STRING,
       field: 'last_name',
     },
+
     username: {
       type: DataTypes.STRING,
       unique: true,
     },
+
     email: {
       type: DataTypes.STRING,
       unique: true,
@@ -28,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       }
     },
+
     avatarUrl: {
       type: DataTypes.STRING,
       field: 'avatar_url',
@@ -38,9 +43,11 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     bio: {
       type: DataTypes.TEXT,
     },
+
     birthday: {
       type: DataTypes.DATEONLY,
       validate: {
@@ -50,10 +57,12 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     personalWebsite: {
       type: DataTypes.STRING,
       field: 'personal_website',
     },
+
     // TODO: Explore using a JSON(B) object for the socials
     twitterProfile: {
       type: DataTypes.STRING,
@@ -65,10 +74,12 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     telephoneNumber: {
       type: DataTypes.INTEGER,
       field: 'telephone_number'
     },
+
     classUpdatedOn: {
       type: DataTypes.STRING,
       field: 'class_updated_on',
