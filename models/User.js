@@ -91,16 +91,13 @@ module.exports = (sequelize, DataTypes) => {
 
     User.hasMany(models.Post, {
       foreignKey: 'authorId',
-      as: 'author',
     });
 
     User.hasMany(models.Comment, {
       foreignKey: 'authorId',
     });
 
-    User.belongsTo(models.Profession, {
-      foreignKey: 'professionId',
-    });
+    User.belongsTo(models.Profession);
 
     User.belongsToMany(models.Skill, {
       through: 'userSkills'
@@ -108,7 +105,6 @@ module.exports = (sequelize, DataTypes) => {
 
     User.hasMany(models.Event, {
       foreignKey: 'ownerId',
-      as: 'owner',
     });
   };
 
