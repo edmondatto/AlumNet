@@ -1,4 +1,4 @@
-const { User, Post } = require('../models');
+const { User, Post, Skill } = require('../models');
 
 module.exports = {
   async fetchAll (request, response) {
@@ -30,7 +30,10 @@ module.exports = {
       include:[{
         model: Post,
         attributes: ['id', 'content', 'createdAt'],
-      }]
+      },{
+        model: Skill,
+        attributes: ['id', 'name'],
+      }],
     };
 
     try {
@@ -73,13 +76,12 @@ module.exports = {
     }
   },
 
-  async updateUser (request, response) {
+  async update (request, response) {
     const { userId } = request.params;
     const { uid: currentUserId = null }  = request.user;
 
-
     // Strip email from request.body; Email updates are only initiated on the firebase end
-    const { email, ...updateObject} = request.body;
+    const { email, skills, ...updateObject} = request.body;
 
     try {
       const userToUpdate = await User.findByPk(userId);
@@ -96,6 +98,11 @@ module.exports = {
           status: 403,
           msg: 'Forbidden'
         });
+      }
+
+      // Handle User Model Associations update
+      if (skills && skills.length > 0) {
+        await userToUpdate.addSkills(skills);
       }
 
       const updatedUser = await userToUpdate.update(updateObject);
