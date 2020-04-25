@@ -1,6 +1,13 @@
 module.exports = (sequelize, DataTypes) => {
   const Profession = sequelize.define('profession', {
-    title: {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      autoIncrement: false,
+      primaryKey: true,
+    },
+
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
