@@ -1,35 +1,42 @@
 const { Profession } = require('../models');
+const { isValid } = require('../utilities');
 
 module.exports = {
-  async fetchOrCreate (request, response) {
+  async fetchOrCreate (request, response, next) {
     const { name } = request.body;
     const { professionId } = request.params;
+    try {
+      if (professionId) {
+        if (!isValid.uuid(professionId)) {
+          return response.status(400).send({
+            status: 400,
+            msg: 'Invalid profession id. Must be a UUID'
+          });
+        }
 
-    if (professionId) {
-      const profession = await Profession.findByPk(professionId);
+        const profession = await Profession.findByPk(professionId);
 
-      if (profession) {
-        return response.status(200).send({
-          status: 200,
-          msg: 'Profession retrieved successfully',
-          profession,
-        });
-      } else {
-        return response.status(404).send({
-          status: 404,
-          msg: `Profession with ID:${professionId} does not exist`
+        if (profession) {
+          return response.status(200).send({
+            status: 200,
+            msg: 'Profession retrieved successfully',
+            profession,
+          });
+        } else {
+          return response.status(404).send({
+            status: 404,
+            msg: `Profession with ID:${professionId} does not exist`
+          });
+        }
+      }
+
+      if (!name) {
+        return response.status(400).send({
+          status: 400,
+          msg: 'Request must include profession\'s name.'
         });
       }
-    }
 
-    if (!name) {
-      return response.status(400).send({
-        status: 400,
-        msg: 'Request must include profession\'s name.'
-      });
-    }
-
-    try {
       const [profession, created] = await Profession.findOrCreate({
         where: { name }
       });

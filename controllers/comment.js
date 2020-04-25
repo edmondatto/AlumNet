@@ -121,6 +121,7 @@ module.exports = {
     }
   },
 
+  // TODO: DRY up the code to check entities to be updated/deleted
   async update (request, response) {
     if (Object.keys(request.body).length === 0) {
       return response.status(400).send({
