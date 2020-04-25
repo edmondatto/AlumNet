@@ -100,7 +100,7 @@ module.exports = (sequelize, DataTypes) => {
     User.belongsTo(models.Profession);
 
     User.belongsToMany(models.Skill, {
-      through: 'userSkills'
+      through: 'UserSkills'
     });
 
     User.hasMany(models.Event, {
