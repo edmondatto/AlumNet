@@ -3,6 +3,8 @@ const postRouter = require('./post');
 const classRouter = require('./class');
 const userRouter = require('./user');
 const commentRouter = require('./comment');
+const skillRouter = require('./skill');
+const professionRouter = require('./profession');
 
 module.exports = {
   authRouter,
@@ -10,4 +12,6 @@ module.exports = {
   classRouter,
   userRouter,
   commentRouter,
+  skillRouter,
+  professionRouter,
 };
