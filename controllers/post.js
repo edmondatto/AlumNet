@@ -1,31 +1,30 @@
-const { Post } = require('../models');
+const { Post, Comment } = require('../models');
 
 module.exports = {
   async create (request, response) {
     const { content } = request.body;
     const { uid: authorId }  = request.user;
 
-    if (content) {
-      try {
-        const newPost = await Post.create({...request.body, authorId});
-
-        return response.status(201).send({
-          status: 201,
-          msg: 'Post created successfully',
-          post: newPost
-        });
-      } catch (error) {
-        return response.status(500).send({
-          status: 500,
-          msg: 'Internal server error',
-        });
-      }
-
-    } else {
+    if (!content) {
       return response.status(400).send({
         status: 400,
         msg: 'Must provide content to create a post'
       })
+    }
+
+    try {
+      const newPost = await Post.create({...request.body, authorId});
+
+      return response.status(201).send({
+        status: 201,
+        msg: 'Post created successfully',
+        post: newPost
+      });
+    } catch (error) {
+      return response.status(500).send({
+        status: 500,
+        msg: 'Internal server error',
+      });
     }
   },
 
@@ -39,7 +38,7 @@ module.exports = {
       });
 
       return response.status(200).send({
-        status: 201,
+        status: 200,
         msg: 'Posts retrieved successfully',
         posts
       });
@@ -55,11 +54,15 @@ module.exports = {
     const { postId } = request.params;
 
     try {
-      const post = await Post.findByPk(postId);
+      const post = await Post.findByPk(postId, {
+        include: {
+          model: Comment
+        }
+      });
 
       if (post) {
         return response.status(200).send({
-          status: 201,
+          status: 200,
           msg: 'Post retrieved successfully',
           post
         });
@@ -79,6 +82,7 @@ module.exports = {
   },
 
   async update (request, response) {
+    // TODO: Extract as helper to check for empty body
     if (Object.keys(request.body).length === 0) {
       return response.status(400).send({
         status: 400,
@@ -143,23 +147,16 @@ module.exports = {
         });
       }
 
-      try {
-        await Post.destroy({
-          where: {
-            id: postId
-          }
-        });
+      await Post.destroy({
+        where: {
+          id: postId
+        }
+      });
 
-        return  response.status(200).send({
-          status: 200,
-          msg: `Post with ID: ${postId} has been deleted successfully`
-        });
-      } catch (error) {
-        return response.status(500).send({
-          status: 500,
-          msg: 'Internal server error'
-        });
-      }
+      return  response.status(200).send({
+        status: 200,
+        msg: `Post with ID: ${postId} has been deleted successfully`
+      });
 
     } catch (error) {
       return response.status(500).send({
