@@ -6,7 +6,7 @@ const app = express();
 const models = require('./models');
 
 // API Router Import
-const { authRouter, postRouter, classRouter, userRouter, commentRouter } = require('./routes');
+const { authRouter, postRouter, classRouter, userRouter, commentRouter, skillRouter, professionRouter } = require('./routes');
 
 // API Custom Middleware Import
 const { userIsLoggedIn } = require('./middleware');
@@ -21,6 +21,8 @@ app.use('/posts', userIsLoggedIn, postRouter);
 app.use('/posts', userIsLoggedIn, commentRouter);
 app.use('/classes', userIsLoggedIn, classRouter);
 app.use('/users', userIsLoggedIn, userRouter);
+app.use('/skills', userIsLoggedIn, skillRouter);
+app.use('/professions', userIsLoggedIn, professionRouter);
 
 // Start API Server
 models.sequelize.sync({alter: true}).then(() =>
