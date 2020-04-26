@@ -5,6 +5,7 @@ const userRouter = require('./user');
 const commentRouter = require('./comment');
 const skillRouter = require('./skill');
 const professionRouter = require('./profession');
+const eventRouter = require('./event');
 
 module.exports = {
   authRouter,
@@ -14,4 +15,5 @@ module.exports = {
   commentRouter,
   skillRouter,
   professionRouter,
+  eventRouter,
 };

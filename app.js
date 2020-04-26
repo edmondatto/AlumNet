@@ -6,7 +6,16 @@ const app = express();
 const models = require('./models');
 
 // API Router Import
-const { authRouter, postRouter, classRouter, userRouter, commentRouter, skillRouter, professionRouter } = require('./routes');
+const {
+    authRouter,
+    postRouter,
+    classRouter,
+    userRouter,
+    commentRouter,
+    skillRouter,
+    professionRouter,
+    eventRouter
+} = require('./routes');
 
 // API Custom Middleware Import
 const { userIsLoggedIn } = require('./middleware');
@@ -19,6 +28,7 @@ app.use(bodyParser.urlencoded({ extended: 'false'}));
 app.use('/auth', authRouter);
 app.use('/posts', userIsLoggedIn, postRouter);
 app.use('/posts', userIsLoggedIn, commentRouter);
+app.use('/events', userIsLoggedIn, eventRouter);
 app.use('/classes', userIsLoggedIn, classRouter);
 app.use('/users', userIsLoggedIn, userRouter);
 app.use('/skills', userIsLoggedIn, skillRouter);
