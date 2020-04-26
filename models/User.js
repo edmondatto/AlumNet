@@ -104,7 +104,7 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     User.hasMany(models.Event, {
-      foreignKey: 'ownerId',
+      foreignKey: 'organiserId',
     });
   };
 

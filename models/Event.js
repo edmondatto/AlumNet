@@ -1,30 +1,39 @@
 module.exports = (sequelize, DataTypes) => {
   const Event = sequelize.define('event', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+
     title: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
     description: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+
     address: {
       type: DataTypes.STRING,
     },
+
     date: {
-      type: DataTypes.DATEONLY,
-      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
-    time: {
-      type: DataTypes.TIME,
-      allowNull: false,
-    },
-    published: {
+
+    isPublished: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      field: 'is_published',
     },
+
     coverImage: {
       type: DataTypes.STRING,
+      field: 'cover_image',
       validate: {
         isUrl: {
           args: true,
@@ -32,6 +41,12 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
+    isEdited: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+
     // TODO: Find fix for Geometry DataType
     // location: {
     //   type: DataTypes.GEOMETRY('POINT'),
@@ -40,7 +55,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Event.associate = (models) => {
     Event.belongsTo(models.User, {
-      foreignKey: 'ownerId',
+      foreignKey: 'organiserId',
     });
   };
   return Event;
