@@ -33,6 +33,8 @@ module.exports = (sequelize, DataTypes) => {
 
     Post.belongsTo(models.Class);
 
+    Post.belongsTo(models.Stream);
+
     Post.hasMany(models.Comment);
   };
   return Post;

@@ -20,6 +20,7 @@ const models = {
   Post: sequelize.import('./Post'),
   Profession: sequelize.import('./Profession'),
   Skill: sequelize.import('./Skill'),
+  Stream: sequelize.import('./Stream'),
 };
 
 Object.keys(models).forEach(modelName => {

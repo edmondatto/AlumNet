@@ -106,6 +106,10 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.Event, {
       foreignKey: 'organiserId',
     });
+
+    User.belongsToMany(models.Stream, {
+      through: 'UserStreams'
+    });
   };
 
   return User;
