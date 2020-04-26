@@ -5,6 +5,7 @@ const userController = require('./user');
 const commentController = require('./comment');
 const skillController = require('./skill');
 const professionController = require('./profession');
+const eventController = require('./event');
 
 module.exports = {
   authController,
@@ -14,4 +15,5 @@ module.exports = {
   commentController,
   skillController,
   professionController,
+  eventController,
 };
