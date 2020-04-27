@@ -30,9 +30,7 @@ module.exports = {
     }
 
     try {
-      const [skill, created] = await Skill.findOrCreate({
-        where: { name }
-      });
+      const [skill, created] = await Skill.findOrCreate({where: { name } });
 
       if (created) {
         return response.status(201).send({
@@ -79,6 +77,7 @@ module.exports = {
     const { skillIds } = request.body;
     const { uid: currentUserId } = request.user;
 
+    // TODO: Extract into utility method
     let skillIdsToDelete;
     if (typeof skillIds === 'string') {
       skillIdsToDelete = [skillIds];
