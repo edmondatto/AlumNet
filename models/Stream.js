@@ -13,8 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     description: {
-      type: DataTypes.TEXT,
-      allowNull: false,
+      type: DataTypes.STRING,
     },
 
     isPrivate: {
@@ -25,12 +24,6 @@ module.exports = (sequelize, DataTypes) => {
     date: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
-    },
-
-    isPublished: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      field: 'is_published',
     },
 
     isArchived: {

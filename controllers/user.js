@@ -1,4 +1,4 @@
-const { User, Post, Skill } = require('../models');
+const { User, Post, Skill, Stream } = require('../models');
 
 module.exports = {
   async fetchAll (request, response) {
@@ -22,7 +22,7 @@ module.exports = {
     }
   },
 
-  async fetchOne (request, response) {
+  async fetchByIdentifier (request, response) {
     const { userIdentifier } = request.params;
     const findUserById = !userIdentifier.startsWith('@');
 
@@ -33,6 +33,9 @@ module.exports = {
       },{
         model: Skill,
         attributes: ['id', 'name'],
+      },{
+        // TODO: Only actual user should see streams
+        model: Stream,
       }],
     };
 
@@ -72,6 +75,81 @@ module.exports = {
       return response.status(500).send({
         status: 500,
         msg: 'Internal server error',
+        error
+      });
+    }
+  },
+
+  async fetchStreamsByUserId (request, response) {
+    const { uid: currentUserId } = request.user;
+    const { userId } = request.params;
+
+    if (userId !== currentUserId) {
+      return response.status(403).send({
+        status: 403,
+        msg: 'Forbidden'
+      });
+    }
+
+    try {
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return response.status(404).send({
+          status: 404,
+          msg: `User with ID:${userId} does not exist`
+        });
+      }
+
+      const streams = await user.getStreams();
+
+      return response.status(200).send({
+        status: 200,
+        msg: 'Streams retrieved successfully',
+        streams
+      });
+    } catch (error) {
+      return response.status(500).send({
+        status: 500,
+        msg: 'Internal server error',
+        error
+      });
+    }
+  },
+
+  async fetchSkillsByUserId (request, response) {
+    const { uid: currentUserId } = request.user;
+    const { userId } = request.params;
+
+    if (userId !== currentUserId) {
+      return response.status(403).send({
+        status: 403,
+        msg: 'Forbidden'
+      });
+    }
+
+    try {
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return response.status(404).send({
+          status: 404,
+          msg: `User with ID:${userId} does not exist`
+        });
+      }
+
+      const skills = await user.getSkills();
+
+      return response.status(200).send({
+        status: 200,
+        msg: 'Skills retrieved successfully',
+        skills
+      });
+    } catch (error) {
+      return response.status(500).send({
+        status: 500,
+        msg: 'Internal server error',
+        error
       });
     }
   },
@@ -82,6 +160,24 @@ module.exports = {
 
     // Strip email from request.body; Email updates are only initiated on the firebase end
     const { email, skills, ...updateObject} = request.body;
+
+    let newSkills = [];
+    // FIXME: Smelly code
+    if (skills) {
+      if (typeof skills === 'string') {
+        newSkills = [
+          ...newSkills,
+          ...skills.split(',').map(id => id.trim()).filter(id => id)
+        ];
+      } else if (Array.isArray(skills)) {
+        newSkills = [...newSkills, ...skills.filter(id => id)];
+      } else {
+        return response.status(400).send({
+          status: 400,
+          msg: 'Provide an array or comma-separated string of IDs of skills to add',
+        });
+      }
+    }
 
     try {
       const userToUpdate = await User.findByPk(userId);
@@ -101,8 +197,8 @@ module.exports = {
       }
 
       // Handle User Model Associations update
-      if (skills && skills.length > 0) {
-        await userToUpdate.addSkills(skills);
+      if (newSkills.length > 0) {
+        await userToUpdate.addSkills(newSkills);
       }
 
       const updatedUser = await userToUpdate.update(updateObject);
@@ -116,6 +212,7 @@ module.exports = {
       return response.status(500).send({
         status: 500,
         msg: 'Internal server error',
+        error
       });
     }
   },
