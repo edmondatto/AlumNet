@@ -6,6 +6,7 @@ const commentRouter = require('./comment');
 const skillRouter = require('./skill');
 const professionRouter = require('./profession');
 const eventRouter = require('./event');
+const streamRouter = require('./stream');
 
 module.exports = {
   authRouter,
@@ -16,4 +17,5 @@ module.exports = {
   skillRouter,
   professionRouter,
   eventRouter,
+  streamRouter,
 };

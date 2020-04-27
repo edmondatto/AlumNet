@@ -14,7 +14,8 @@ const {
     commentRouter,
     skillRouter,
     professionRouter,
-    eventRouter
+    eventRouter,
+    streamRouter,
 } = require('./routes');
 
 // API Custom Middleware Import
@@ -30,6 +31,7 @@ app.use('/posts', userIsLoggedIn, postRouter);
 app.use('/posts', userIsLoggedIn, commentRouter);
 app.use('/events', userIsLoggedIn, eventRouter);
 app.use('/classes', userIsLoggedIn, classRouter);
+app.use('/streams', userIsLoggedIn, streamRouter);
 app.use('/users', userIsLoggedIn, userRouter);
 app.use('/skills', userIsLoggedIn, skillRouter);
 app.use('/professions', userIsLoggedIn, professionRouter);
