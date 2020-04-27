@@ -196,6 +196,19 @@ module.exports = {
         });
       }
 
+      // Handle username checks
+      let usernameExists;
+      if (request.body.username.length > 0) {
+        usernameExists = User.findOne({ where: { username: request.body.username }});
+      }
+
+      if (usernameExists) {
+        return response.status(400).send({
+            status: 400,
+            msg: 'Username already exists'
+        });
+      }
+
       // Handle User Model Associations update
       if (newSkills.length > 0) {
         await userToUpdate.addSkills(newSkills);
