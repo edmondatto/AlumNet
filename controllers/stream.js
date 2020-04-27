@@ -81,7 +81,42 @@ module.exports = {
     }
   },
 
-  async fetchOne () {},
+  async fetchOne (request, response) {
+    const { streamId } = request.params;
+    const { uid: currentUserId } = request.user;
+
+    try {
+      const stream = await Stream.findByPk(streamId);
+
+      if (!stream) {
+        return response.status(404).send({
+          status: 404,
+          msg: `Stream with Id:${streamId} does not exist`
+        });
+      }
+
+      const currentUserIsMemberOfStream = await stream.hasUser(currentUserId);
+
+      if (currentUserIsMemberOfStream || !stream.isPrivate) {
+        return response.status(200).send({
+          status: 200,
+          msg: 'Stream retrieved successfully',
+          stream
+        });
+      }
+
+      return response.status(403).send({
+        status: 403,
+        msg: 'Forbidden',
+      });
+    } catch (error) {
+      return response.status(500).send({
+        status: 500,
+        msg: 'Internal server error',
+        error
+      });
+    }
+  },
 
   async join (request, response) {
     const { streamId } = request.params;
@@ -108,7 +143,6 @@ module.exports = {
       const isUserMemberOfStream = await stream.hasUser(user);
 
       if (isUserMemberOfStream) {
-        console.log('running')
         return response.status(200).send({
           status: 200,
           msg: 'User is already a member of this stream'
@@ -130,7 +164,179 @@ module.exports = {
     }
   },
 
-  async addMember (request, response) {},
+  async leave (request, response) {
+    const { streamId } = request.params;
+    const { uid: currentUserId = null }  = request.user;
 
-  async archive (request, response) {},
+    try {
+      const user = await User.findByPk(currentUserId);
+      const stream = await Stream.findByPk(streamId);
+
+      if (!stream) {
+        return response.status(404).send({
+          status: 404,
+          msg: `Stream with ID: ${streamId} does not exist`
+        })
+      }
+
+      const isUserMemberOfStream = await stream.hasUser(user);
+
+      if (isUserMemberOfStream) {
+        await stream.removeUser(currentUserId);
+
+        return response.status(200).send({
+          status: 200,
+          msg: 'User removed from stream successfully'
+        })
+      }
+
+      return response.status(403).send({
+        status: 403,
+        msg: 'Forbidden'
+      });
+    } catch (error) {
+      return response.status(500).send({
+        status: 500,
+        msg: 'Internal server error',
+        error
+      });
+    }
+  },
+
+  async addMembers (request, response) {
+    const { uid: currentUserId } = request.user;
+    const { members } = request.body;
+    const { streamId } = request.params;
+
+    let newMembers = [];
+    // FIXME: Smelly code. DRY up
+    if (members) {
+      if (typeof members === 'string') {
+        newMembers = [
+          ...newMembers,
+          ...members.split(',').map(id => id.trim()).filter(id => id)
+        ];
+      } else if (Array.isArray(members)) {
+        newMembers = [...newMembers, ...members.filter(id => id)];
+      } else {
+        return response.status(400).send({
+          status: 400,
+          msg: 'Provide an array or comma-separated string of IDs of members to add to the stream',
+        });
+      }
+    }
+
+    try {
+      const user = await User.findByPk(currentUserId);
+      const stream = await Stream.findByPk(streamId);
+
+      if (!stream) {
+        return response.status(404).send({
+          status: 404,
+          msg: `Stream with ID ${streamId} does not exist`
+        });
+      }
+
+      const isUserMemberOfStream = await stream.hasUser(currentUserId);
+
+      if (!isUserMemberOfStream) {
+        return response.status(403).send({
+          status: 403,
+          msg: 'Forbidden'
+        });
+      }
+
+      await stream.addUsers(newMembers);
+
+      return response.status(201).send({
+        status: 201,
+        msg: 'New member(s) added to stream successfully'
+      });
+    } catch (error) {
+      return response.status(500).send({
+        status: 500,
+        msg: 'Internal server error',
+        error
+      });
+    }
+
+  },
+
+  async archive (request, response) {
+    const { streamId } = request.params;
+    const { uid: currentUserId = null }  = request.user;
+
+    try {
+      const user = await User.findByPk(currentUserId);
+      const stream = await Stream.findByPk(streamId);
+
+      if (!stream) {
+        return response.status(404).send({
+          status: 404,
+          msg: `Stream with ID: ${streamId} does not exist`
+        })
+      }
+
+      const isUserMemberOfStream = await stream.hasUser(user);
+
+      if (isUserMemberOfStream) {
+        await stream.update({ isArchived: true });
+
+        return response.status(200).send({
+          status: 200,
+          msg: 'Stream archived successfully'
+        })
+      }
+
+      return response.status(403).send({
+        status: 403,
+        msg: 'Forbidden'
+      });
+    } catch (error) {
+      return response.status(500).send({
+        status: 500,
+        msg: 'Internal server error',
+        error
+      });
+    }
+  },
+
+  async restore (request, response) {
+    const { streamId } = request.params;
+    const { uid: currentUserId = null }  = request.user;
+
+    try {
+      const user = await User.findByPk(currentUserId);
+      const stream = await Stream.findByPk(streamId);
+
+      if (!stream) {
+        return response.status(404).send({
+          status: 404,
+          msg: `Stream with ID: ${streamId} does not exist`
+        })
+      }
+
+      const isUserMemberOfStream = await stream.hasUser(user);
+
+      if (isUserMemberOfStream) {
+        await stream.update({ isArchived: false });
+
+        return response.status(200).send({
+          status: 200,
+          msg: 'Stream restored successfully'
+        })
+      }
+
+      return response.status(403).send({
+        status: 403,
+        msg: 'Forbidden'
+      });
+    } catch (error) {
+      return response.status(500).send({
+        status: 500,
+        msg: 'Internal server error',
+        error
+      });
+    }
+  },
 };
