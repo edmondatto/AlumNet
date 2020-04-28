@@ -27,16 +27,12 @@ module.exports = {
     const findUserById = !userIdentifier.startsWith('@');
 
     const userQueryOptions = {
-      include:[{
-        model: Post,
-        attributes: ['id', 'content', 'createdAt'],
-      },{
-        model: Skill,
-        attributes: ['id', 'name'],
-      },{
-        // TODO: Only actual user should see streams
-        model: Stream,
-      }],
+      include:[
+        {
+          model: Skill,
+          attributes: ['id', 'name'],
+        }
+      ],
     };
 
     try {
@@ -199,7 +195,7 @@ module.exports = {
       // Handle username checks
       let usernameExists;
       if (request.body.username.length > 0) {
-        usernameExists = User.findOne({ where: { username: request.body.username }});
+        usernameExists = await User.findOne({ where: { username: request.body.username }});
       }
 
       if (usernameExists) {
