@@ -5,20 +5,18 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+
     content: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+
     isPublished: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       field: 'is_published',
     },
-    isPublic: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-      field: 'is_public',
-    },
+
     isEdited: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -30,8 +28,6 @@ module.exports = (sequelize, DataTypes) => {
     Post.belongsTo(models.User, {
       foreignKey: 'authorId',
     });
-
-    Post.belongsTo(models.Class);
 
     Post.belongsTo(models.Stream);
 

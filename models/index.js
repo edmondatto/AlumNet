@@ -13,7 +13,6 @@ const sequelize = new Sequelize(
 );
 
 const models = {
-  Class: sequelize.import('./Class'),
   User: sequelize.import('./User'),
   Comment: sequelize.import('./Comment'),
   Event: sequelize.import('./Event'),
