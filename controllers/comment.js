@@ -1,4 +1,4 @@
-const { Post, Comment } = require('../models');
+const { Post, Comment, Stream } = require('../models');
 
 module.exports = {
   async create (request, response) {
@@ -14,16 +14,29 @@ module.exports = {
     }
 
     try {
-      const parentPostExists = await Post.findByPk(postId);
+      const parentPost = await Post.findByPk(postId);
 
-      if (!parentPostExists) {
+      if (!parentPost) {
         return response.status(400).send({
           status: 400,
           msg: `Parent post with ID:${postId} does not exist`
         });
       }
 
-      const newComment = await Comment.create({
+      // Handle case of creating a comment on a post in a stream
+      if (parentPost.streamId) {
+        const stream = await Stream.findByPk(parentPost.streamId);
+        const isAuthorMemberOfStream = await stream.hasUser(authorId);
+
+        if (!isAuthorMemberOfStream) {
+          return response.status(403).send({
+            status: 403,
+            msg: 'Forbidden'
+          });
+        }
+      }
+
+      const comment = await Comment.create({
         content,
         postId,
         authorId
@@ -32,7 +45,7 @@ module.exports = {
       return response.status(201).send({
         status: 201,
         msg: 'Comment created successfully',
-        newComment
+        comment
       });
     } catch (error) {
       return response.status(500).send({
@@ -45,9 +58,11 @@ module.exports = {
 
   async fetchAll (request, response) {
     const { postId } = request.params;
+    const { uid: authorId } = request.user;
 
     try {
       // TODO: Add Where clause to retrieve "archived" posts. Return comments as long as parent post has ever existed
+
       const post = await Post.findByPk(postId);
 
       if (!post) {
@@ -57,7 +72,20 @@ module.exports = {
         });
       }
 
-      const comments = await Comment.findAll({
+      // Handle case of fetching comments on a post in a stream
+      if (post.streamId) {
+        const stream = await Stream.findByPk(post.streamId);
+        const isAuthorMemberOfStream = await stream.hasUser(authorId);
+
+        if (!isAuthorMemberOfStream) {
+          return response.status(403).send({
+            status: 403,
+            msg: 'Forbidden'
+          });
+        }
+      }
+
+      const {rows: comments, count: totalCount} = await Comment.findAndCountAll({
         where: {
           postId: postId
         },
@@ -66,19 +94,20 @@ module.exports = {
       return response.status(200).send({
         status: 200,
         msg: 'Comments retrieved successfully',
-        comments
+        comments,
+        totalCount
       });
     } catch (error) {
       return response.status(500).send({
         status: 500,
-        msg: 'Internal server error',
-        error
+        msg: 'Internal server error'
       });
     }
   },
 
   async fetchById (request, response) {
     const { postId, commentId } = request.params;
+    const { uid: currentUserId } = request.user;
 
     try {
       const post = await Post.findByPk(postId);
@@ -88,6 +117,19 @@ module.exports = {
           status: 404,
           msg: `Post with ID:${postId} does not exist`
         });
+      }
+
+      // Handle case of fetching a comment on a post in a stream
+      if (post.streamId) {
+        const stream = await Stream.findByPk(post.streamId);
+        const isCurrentUserMemberOfStream = await stream.hasUser(currentUserId);
+
+        if (!isCurrentUserMemberOfStream) {
+          return response.status(403).send({
+            status: 403,
+            msg: 'Forbidden'
+          });
+        }
       }
 
       const comment = await Comment.findByPk(commentId);
@@ -121,12 +163,12 @@ module.exports = {
     }
   },
 
-  // TODO: DRY up the code to check entities to be updated/deleted
   async update (request, response) {
-    if (Object.keys(request.body).length === 0) {
+    // TODO: DRY up the code to check entities to be updated/deleted
+    if (Object.keys(request.body).length === 0 || !request.body.content.length) {
       return response.status(400).send({
         status: 400,
-        msg: 'Bad request: No updates received'
+        msg: 'No updates received/Empty string'
       });
     }
 
@@ -162,8 +204,7 @@ module.exports = {
       return response.status(200).send({
         status: 200,
         msg: `Comment with ID: ${commentId} has been updated successfully`,
-        post: updatedComment
-
+        comment: updatedComment
       });
     } catch (error) {
       return response.status(500).send({
@@ -173,7 +214,7 @@ module.exports = {
     }
   },
 
-  async delete (request, response, next) {
+  async delete (request, response) {
     const { commentId, postId } = request.params;
     const { uid: currentUserId = null }  = request.user;
 
