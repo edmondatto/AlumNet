@@ -9,7 +9,6 @@ const models = require('./models');
 const {
     authRouter,
     postRouter,
-    classRouter,
     userRouter,
     commentRouter,
     skillRouter,
@@ -30,7 +29,6 @@ app.use('/auth', authRouter);
 app.use('/posts', userIsLoggedIn, postRouter);
 app.use('/posts', userIsLoggedIn, commentRouter);
 app.use('/events', userIsLoggedIn, eventRouter);
-app.use('/classes', userIsLoggedIn, classRouter);
 app.use('/streams', userIsLoggedIn, streamRouter);
 app.use('/users', userIsLoggedIn, userRouter);
 app.use('/skills', userIsLoggedIn, skillRouter);
