@@ -79,16 +79,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       field: 'telephone_number'
     },
-
-    classUpdatedOn: {
-      type: DataTypes.STRING,
-      field: 'class_updated_on',
-    },
   });
 
   User.associate = (models) => {
-    User.belongsTo(models.Class);
-
     User.hasMany(models.Post, {
       foreignKey: 'authorId',
     });
