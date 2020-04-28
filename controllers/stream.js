@@ -41,7 +41,6 @@ module.exports = {
       }
 
       const newStream = await Stream.create(request.body);
-      console.log('===>>>>', newStreamInvitees);
       await newStream.addUsers(newStreamInvitees);
 
       return response.status(201).send({
@@ -86,7 +85,12 @@ module.exports = {
     const { uid: currentUserId } = request.user;
 
     try {
-      const stream = await Stream.findByPk(streamId);
+      const stream = await Stream.findByPk(streamId, {
+        include: {
+          model: User,
+          attributes: ['id', 'firstName', 'lastName', 'avatarUrl'],
+        }
+      });
 
       if (!stream) {
         return response.status(404).send({
