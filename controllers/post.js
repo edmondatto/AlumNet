@@ -1,14 +1,13 @@
 const { Post, Comment, Stream } = require('../models');
 
 module.exports = {
-  async create (request, response) {
+  async create (request, response, next) {
     const { content } = request.body;
     const { uid: authorId }  = request.user;
     const { streamId } = request.params;
 
     if (!content) {
       return response.status(400).send({
-        status: 400,
         msg: 'Must provide content to create a post'
       })
     }
@@ -20,7 +19,6 @@ module.exports = {
 
         if (!stream) {
           return response.status(404).send({
-            status: 404,
             msg: `Stream with ID:${streamId} does not exist`
           });
         }
@@ -29,7 +27,6 @@ module.exports = {
 
         if (!authorIsMemberOfStream) {
           return response.status(403).send({
-            status: 403,
             msg: 'Forbidden'
           })
         }
@@ -42,31 +39,26 @@ module.exports = {
       });
 
       return response.status(201).send({
-        status: 201,
         msg: 'Post created successfully',
         post: newPost
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-      });
+      next(error);
     }
   },
 
-  async fetchPosts (request, response) {
+  async fetchPosts (request, response, next) {
     const { uid: currentUserId }  = request.user;
     const { streamId } = request.params;
 
     try {
       // Handle requests via /api/streams/:streamId/posts
-      let stream, posts;
+      let stream, posts, totalCount;
       if (streamId) {
         stream = await Stream.findByPk(streamId);
 
         if (!stream) {
           return response.status(404).send({
-            status: 404,
             msg: `Stream with ID:${streamId} does not exist`
           });
         }
@@ -75,30 +67,29 @@ module.exports = {
 
         if (!currentUserIsMemberOfStream && stream.isPrivate) {
           return response.status(403).send({
-            status: 403,
             msg: 'Forbidden'
           })
         }
 
         posts = await stream.getPosts();
+        totalCount = await stream.countPosts()
       } else {
-        posts = await Post.findAll({ where: { streamId: null } });
+        const { count , rows } = await Post.findAndCountAll({ where: { streamId: null } });
+        posts = rows;
+        totalCount = count;
       }
 
       return response.status(200).send({
-        status: 200,
         msg: 'Posts retrieved successfully',
-        posts
+        posts,
+        totalCount
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'internal server error'
-      });
+      next(error);
     }
   },
 
-  async fetchOne (request, response) {
+  async fetchOne (request, response, next) {
     const { postId, streamId } = request.params;
     const { uid: currentUserId } = request.user;
 
@@ -110,7 +101,6 @@ module.exports = {
 
         if (!stream) {
           return response.status(404).send({
-            status: 404,
             msg: `Stream with ID:${streamId} does not exist`
           });
         }
@@ -119,7 +109,6 @@ module.exports = {
 
         if (!currentUserIsMemberOfStream && stream.isPrivate) {
           return response.status(403).send({
-            status: 403,
             msg: 'Forbidden'
           })
         }
@@ -127,9 +116,9 @@ module.exports = {
         post = await stream.getPosts({ where: { id: postId } });
       } else {
         post = await Post.findOne({ where: { id: postId }, include: { model: Comment } });
+
         if (post && post.streamId) {
           return response.status(403).send({
-            status: 403,
             msg: 'Forbidden'
           });
         }
@@ -137,31 +126,24 @@ module.exports = {
 
       if (post) {
         return response.status(200).send({
-          status: 200,
           msg: 'Post retrieved successfully',
           post
         });
       } else {
         return response.status(404).send({
-          status: 404,
           msg: `Post with ID ${postId} does not exist`
         });
       }
 
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async update (request, response) {
+  async update (request, response, next) {
     // TODO: Extract as helper to check for empty body
     if (Object.keys(request.body).length === 0 || !request.body.content.length) {
       return response.status(400).send({
-        status: 400,
         msg: 'No updates received/Empty string'
       });
     }
@@ -177,7 +159,6 @@ module.exports = {
 
         if (!stream) {
           return response.status(404).send({
-            status: 404,
             msg: `Stream with ID:${streamId} does not exist`
           });
         }
@@ -186,7 +167,6 @@ module.exports = {
 
         if (!currentUserIsMemberOfStream) {
           return response.status(403).send({
-            status: 403,
             msg: 'Forbidden'
           })
         }
@@ -197,7 +177,6 @@ module.exports = {
         postToUpdate = await Post.findByPk(postId);
         if (postToUpdate && postToUpdate.streamId) {
           return response.status(403).send({
-            status: 403,
             msg: 'Forbidden'
           });
         }
@@ -205,14 +184,12 @@ module.exports = {
 
       if (!postToUpdate) {
         return response.status(404).send({
-          status: 404,
           msg: `Post with ID: ${postId} does not exist`
         });
       }
 
       if (postToUpdate.authorId !== currentUserId) {
         return response.status(403).send({
-          status: 403,
           msg: 'Forbidden'
         });
       }
@@ -220,19 +197,15 @@ module.exports = {
       const updatedPost = await postToUpdate.update({...request.body, isEdited: true});
 
       return response.status(200).send({
-        status: 200,
         msg: `Post with ID: ${postId} has been updated successfully`,
         post: updatedPost
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error'
-      });
+      next(error);
     }
   },
 
-  async delete (request, response) {
+  async delete (request, response, next) {
     const { postId } = request.params;
     const { uid: userId = null }  = request.user;
 
@@ -241,14 +214,12 @@ module.exports = {
 
       if (!postToDelete) {
         return response.status(404).send({
-          status: 404,
           msg: `Post with ID: ${postId} does not exist`
         });
       }
 
       if (postToDelete.authorId !== userId) {
         return response.status(403).send({
-          status: 403,
           msg: 'Forbidden'
         });
       }
@@ -259,16 +230,12 @@ module.exports = {
         }
       });
 
-      return  response.status(200).send({
-        status: 200,
+      return response.status(200).send({
         msg: `Post with ID: ${postId} has been deleted successfully`
       });
 
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-      });
+      next(error);
     }
   },
 };

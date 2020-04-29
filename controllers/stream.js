@@ -1,13 +1,12 @@
 const { Stream, User } = require('../models');
 
 module.exports = {
-  async create (request, response) {
+  async create (request, response, next) {
     const { name, invite } = request.body;
     const { uid: currentUserId } = request.user;
 
     if (!name || name.split('').includes(' ')) {
       return response.status(400).send({
-        status: 400,
         msg: 'Provide a name without any spaces to create a new stream'
       });
     }
@@ -24,7 +23,6 @@ module.exports = {
         newStreamInvitees = [...newStreamInvitees, ...invite.filter(id => id)];
       } else {
         return response.status(400).send({
-          status: 400,
           msg: 'Provide an array or comma-separated string of IDs of users to invite',
         });
       }
@@ -34,8 +32,7 @@ module.exports = {
       const streamAlreadyExists = await Stream.findOne({ where: { name } });
 
       if (streamAlreadyExists) {
-        return response.status(400).send({
-          status: 400,
+        return response.status(422).send({
           msg: `A stream called ${name} already exists`
         });
       }
@@ -44,20 +41,15 @@ module.exports = {
       await newStream.addUsers(newStreamInvitees);
 
       return response.status(201).send({
-        status: 201,
         msg: `Stream named ${name} created successfully`,
         stream: newStream
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async fetchAll (request, response) {
+  async fetchAll (request, response, next) {
     try {
       const {rows: streams, count: totalCount} = await Stream.findAndCountAll({
         where: {
@@ -66,21 +58,16 @@ module.exports = {
       });
 
       return response.status(200).send({
-        status: 200,
         msg: 'Streams retrieved successfully',
         streams,
         totalCount
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async fetchOne (request, response) {
+  async fetchOne (request, response, next) {
     const { streamId } = request.params;
     const { uid: currentUserId } = request.user;
 
@@ -94,7 +81,6 @@ module.exports = {
 
       if (!stream) {
         return response.status(404).send({
-          status: 404,
           msg: `Stream with Id:${streamId} does not exist`
         });
       }
@@ -103,7 +89,6 @@ module.exports = {
 
       if (currentUserIsMemberOfStream || !stream.isPrivate) {
         return response.status(200).send({
-          status: 200,
           msg: 'Stream retrieved successfully',
           stream
         });
@@ -114,15 +99,11 @@ module.exports = {
         msg: 'Forbidden',
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async join (request, response) {
+  async join (request, response, next) {
     const { streamId } = request.params;
     const { uid: currentUserId = null }  = request.user;
 
@@ -132,14 +113,12 @@ module.exports = {
 
       if (!stream) {
         return response.status(404).send({
-          status: 404,
           msg: `Stream with ID: ${streamId} does not exist`
         })
       }
 
       if (stream.isPrivate) {
         return response.status(403).send({
-          status: 403,
           msg: 'Forbidden'
         });
       }
@@ -147,8 +126,7 @@ module.exports = {
       const isUserMemberOfStream = await stream.hasUser(user);
 
       if (isUserMemberOfStream) {
-        return response.status(200).send({
-          status: 200,
+        return response.status(422).send({
           msg: 'User is already a member of this stream'
         })
       }
@@ -160,15 +138,11 @@ module.exports = {
         msg: `User has joined stream with ID: ${streamId} successfully`
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async leave (request, response) {
+  async leave (request, response, next) {
     const { streamId } = request.params;
     const { uid: currentUserId = null }  = request.user;
 
@@ -178,7 +152,6 @@ module.exports = {
 
       if (!stream) {
         return response.status(404).send({
-          status: 404,
           msg: `Stream with ID: ${streamId} does not exist`
         })
       }
@@ -189,7 +162,6 @@ module.exports = {
         await stream.removeUser(currentUserId);
 
         return response.status(200).send({
-          status: 200,
           msg: 'User removed from stream successfully'
         })
       }
@@ -199,15 +171,11 @@ module.exports = {
         msg: 'Forbidden'
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async addMembers (request, response) {
+  async addMembers (request, response, next) {
     const { uid: currentUserId } = request.user;
     const { members } = request.body;
     const { streamId } = request.params;
@@ -224,7 +192,6 @@ module.exports = {
         newMembers = [...newMembers, ...members.filter(id => id)];
       } else {
         return response.status(400).send({
-          status: 400,
           msg: 'Provide an array or comma-separated string of IDs of members to add to the stream',
         });
       }
@@ -236,7 +203,6 @@ module.exports = {
 
       if (!stream) {
         return response.status(404).send({
-          status: 404,
           msg: `Stream with ID ${streamId} does not exist`
         });
       }
@@ -253,20 +219,15 @@ module.exports = {
       await stream.addUsers(newMembers);
 
       return response.status(201).send({
-        status: 201,
         msg: 'New member(s) added to stream successfully'
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
 
   },
 
-  async archive (request, response) {
+  async archive (request, response, next) {
     const { streamId } = request.params;
     const { uid: currentUserId = null }  = request.user;
 
@@ -276,7 +237,6 @@ module.exports = {
 
       if (!stream) {
         return response.status(404).send({
-          status: 404,
           msg: `Stream with ID: ${streamId} does not exist`
         })
       }
@@ -287,25 +247,19 @@ module.exports = {
         await stream.update({ isArchived: true });
 
         return response.status(200).send({
-          status: 200,
           msg: 'Stream archived successfully'
         })
       }
 
       return response.status(403).send({
-        status: 403,
         msg: 'Forbidden'
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async restore (request, response) {
+  async restore (request, response, next) {
     const { streamId } = request.params;
     const { uid: currentUserId = null }  = request.user;
 
@@ -315,7 +269,6 @@ module.exports = {
 
       if (!stream) {
         return response.status(404).send({
-          status: 404,
           msg: `Stream with ID: ${streamId} does not exist`
         })
       }
@@ -326,21 +279,15 @@ module.exports = {
         await stream.update({ isArchived: false });
 
         return response.status(200).send({
-          status: 200,
           msg: 'Stream restored successfully'
         })
       }
 
       return response.status(403).send({
-        status: 403,
         msg: 'Forbidden'
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 };

@@ -1,14 +1,13 @@
 const { Post, Comment, Stream } = require('../models');
 
 module.exports = {
-  async create (request, response) {
+  async create (request, response, next) {
     const { postId } = request.params;
     const { uid: authorId } = request.user;
     const { content } = request.body;
 
     if (!content) {
       return response.status(400).send({
-        status: 400,
         msg: 'Must provide content to create a comment'
       })
     }
@@ -17,8 +16,7 @@ module.exports = {
       const parentPost = await Post.findByPk(postId);
 
       if (!parentPost) {
-        return response.status(400).send({
-          status: 400,
+        return response.status(404).send({
           msg: `Parent post with ID:${postId} does not exist`
         });
       }
@@ -30,7 +28,6 @@ module.exports = {
 
         if (!isAuthorMemberOfStream) {
           return response.status(403).send({
-            status: 403,
             msg: 'Forbidden'
           });
         }
@@ -43,20 +40,15 @@ module.exports = {
       });
 
       return response.status(201).send({
-        status: 201,
         msg: 'Comment created successfully',
         comment
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async fetchAll (request, response) {
+  async fetchAll (request, response, next) {
     const { postId } = request.params;
     const { uid: authorId } = request.user;
 
@@ -67,7 +59,6 @@ module.exports = {
 
       if (!post) {
         return response.status(404).send({
-          status: 404,
           msg: `Post with ID:${postId} does not exist`
         });
       }
@@ -79,7 +70,6 @@ module.exports = {
 
         if (!isAuthorMemberOfStream) {
           return response.status(403).send({
-            status: 403,
             msg: 'Forbidden'
           });
         }
@@ -92,20 +82,16 @@ module.exports = {
       });
 
       return response.status(200).send({
-        status: 200,
         msg: 'Comments retrieved successfully',
         comments,
         totalCount
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error'
-      });
+      next(error);
     }
   },
 
-  async fetchById (request, response) {
+  async fetchById (request, response, next) {
     const { postId, commentId } = request.params;
     const { uid: currentUserId } = request.user;
 
@@ -114,7 +100,6 @@ module.exports = {
 
       if (!post) {
         return response.status(404).send({
-          status: 404,
           msg: `Post with ID:${postId} does not exist`
         });
       }
@@ -126,7 +111,6 @@ module.exports = {
 
         if (!isCurrentUserMemberOfStream) {
           return response.status(403).send({
-            status: 403,
             msg: 'Forbidden'
           });
         }
@@ -136,38 +120,30 @@ module.exports = {
 
       if (!comment) {
         return response.status(404).send({
-          status: 404,
           msg: `Comment with ID:${commentId} does not exist`
         });
       }
 
       if (post.id !== comment.postId) {
         return response.status(404).send({
-          status: 404,
           msg: `Post with ID:${postId} does not have a comment with ID:${commentId}`
         });
       }
 
       return response.status(200).send({
-        status: 200,
         msg: 'Comment retrieved successfully',
         comment
       });
 
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async update (request, response) {
+  async update (request, response, next) {
     // TODO: DRY up the code to check entities to be updated/deleted
     if (Object.keys(request.body).length === 0 || !request.body.content.length) {
       return response.status(400).send({
-        status: 400,
         msg: 'No updates received/Empty string'
       });
     }
@@ -180,21 +156,18 @@ module.exports = {
 
       if (!commentToUpdate) {
         return response.status(404).send({
-          status: 404,
           msg: `Comment with ID: ${commentId} does not exist`
         });
       }
 
       if (commentToUpdate.authorId !== currentUserId) {
         return response.status(403).send({
-          status: 403,
           msg: 'Forbidden'
         });
       }
 
       if (commentToUpdate.postId !== postId) {
         return response.status(404).send({
-          status: 404,
           msg: `Post with ID:${postId} does not have a comment with ID:${commentId}`
         });
       }
@@ -202,15 +175,11 @@ module.exports = {
       const updatedComment = await commentToUpdate.update({...request.body, isEdited: true});
 
       return response.status(200).send({
-        status: 200,
         msg: `Comment with ID: ${commentId} has been updated successfully`,
         comment: updatedComment
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error'
-      });
+      next(error);
     }
   },
 
@@ -223,21 +192,18 @@ module.exports = {
 
       if (!commentToDelete) {
         return response.status(404).send({
-          status: 404,
           msg: `Comment with ID: ${commentId} does not exist`
         });
       }
 
       if (commentToDelete.authorId !== currentUserId) {
         return response.status(403).send({
-          status: 403,
           msg: 'Forbidden'
         });
       }
 
       if (commentToDelete.postId !== postId) {
         return response.status(404).send({
-          status: 404,
           msg: `Post with ID:${postId} does not have a comment with ID:${commentId}`
         });
       }
@@ -248,16 +214,10 @@ module.exports = {
         }
       });
 
-      return  response.status(200).send({
-        status: 200,
-        msg: `Comment with ID: ${commentId} has been deleted successfully`
-      });
+      return  response.status(204).send();
 
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-      });
+      next(error);
     }
   },
 };

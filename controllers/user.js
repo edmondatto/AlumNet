@@ -1,28 +1,23 @@
 const { User, Post, Skill, Stream } = require('../models');
 
 module.exports = {
-  async fetchAll (request, response) {
+  async fetchAll (request, response, next) {
     try {
       const { rows: users, count: totalCount } = await User.findAndCountAll({
         attributes: ['id', 'firstName', 'lastName', 'username', 'avatarUrl'],
       });
 
       return response.status(200).send({
-        status: 200,
         msg: 'Users retrieved successfully',
         totalCount,
         users
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async fetchByIdentifier (request, response) {
+  async fetchByIdentifier (request, response, next) {
     const { userIdentifier } = request.params;
     const findUserById = !userIdentifier.startsWith('@');
 
@@ -42,7 +37,6 @@ module.exports = {
         user = await User.findByPk(userIdentifier, userQueryOptions);
       } else if (userIdentifier.substring(1).length === 0) {
         return response.status(400).send({
-          status: 400,
           msg: 'No username provided'
         });
       } else {
@@ -56,33 +50,26 @@ module.exports = {
 
       if (user) {
         return response.status(200).send({
-          status: 200,
           msg: 'User retrieved successfully',
           user: user
         });
       } else {
         return response.status(404).send({
-          status: 404,
           msg: `User with ${findUserById ? 'ID' : 'username'} ${userIdentifier} does not exist`
         });
       }
 
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async fetchStreamsByUserId (request, response) {
+  async fetchStreamsByUserId (request, response, next) {
     const { uid: currentUserId } = request.user;
     const { userId } = request.params;
 
     if (userId !== currentUserId) {
       return response.status(403).send({
-        status: 403,
         msg: 'Forbidden'
       });
     }
@@ -92,7 +79,6 @@ module.exports = {
 
       if (!user) {
         return response.status(404).send({
-          status: 404,
           msg: `User with ID:${userId} does not exist`
         });
       }
@@ -100,26 +86,20 @@ module.exports = {
       const streams = await user.getStreams();
 
       return response.status(200).send({
-        status: 200,
         msg: 'Streams retrieved successfully',
         streams
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async fetchSkillsByUserId (request, response) {
+  async fetchSkillsByUserId (request, response, next) {
     const { uid: currentUserId } = request.user;
     const { userId } = request.params;
 
     if (userId !== currentUserId) {
       return response.status(403).send({
-        status: 403,
         msg: 'Forbidden'
       });
     }
@@ -129,7 +109,6 @@ module.exports = {
 
       if (!user) {
         return response.status(404).send({
-          status: 404,
           msg: `User with ID:${userId} does not exist`
         });
       }
@@ -137,20 +116,15 @@ module.exports = {
       const skills = await user.getSkills();
 
       return response.status(200).send({
-        status: 200,
         msg: 'Skills retrieved successfully',
         skills
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 
-  async update (request, response) {
+  async update (request, response, next) {
     const { userId } = request.params;
     const { uid: currentUserId = null }  = request.user;
 
@@ -169,7 +143,6 @@ module.exports = {
         newSkills = [...newSkills, ...skills.filter(id => id)];
       } else {
         return response.status(400).send({
-          status: 400,
           msg: 'Provide an array or comma-separated string of IDs of skills to add',
         });
       }
@@ -199,8 +172,7 @@ module.exports = {
       }
 
       if (usernameExists) {
-        return response.status(400).send({
-            status: 400,
+        return response.status(422).send({
             msg: 'Username already exists'
         });
       }
@@ -213,16 +185,11 @@ module.exports = {
       const updatedUser = await userToUpdate.update(updateObject);
 
       return response.status(200).send({
-        status: 200,
         msg: `User with ID: ${currentUserId} has been updated successfully`,
         user: updatedUser
       });
     } catch (error) {
-      return response.status(500).send({
-        status: 500,
-        msg: 'Internal server error',
-        error
-      });
+      next(error);
     }
   },
 };
