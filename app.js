@@ -18,7 +18,7 @@ const {
 } = require('./routes');
 
 // API Custom Middleware Import
-const { userIsLoggedIn } = require('./middleware');
+const { userIsLoggedIn, errorHandler } = require('./middleware');
 
 // Application Level Middleware
 app.use(bodyParser.json());
@@ -33,6 +33,9 @@ app.use('/streams', userIsLoggedIn, streamRouter);
 app.use('/users', userIsLoggedIn, userRouter);
 app.use('/skills', userIsLoggedIn, skillRouter);
 app.use('/professions', userIsLoggedIn, professionRouter);
+
+// Catch-all Error handler
+app.use(errorHandler);
 
 // Start API Server
 models.sequelize.sync({alter: true}).then(() =>
