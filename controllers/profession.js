@@ -1,5 +1,5 @@
 const { Profession } = require('../models');
-const { isValid } = require('../utilities');
+const { helpers: { isValidUUID } } = require('../utilities');
 
 module.exports = {
   async fetchOrCreate (request, response, next) {
@@ -7,7 +7,7 @@ module.exports = {
     const { professionId } = request.params;
     try {
       if (professionId) {
-        if (!isValid.uuid(professionId)) {
+        if (!isValidUUID(professionId)) {
           return response.status(400).send({
             msg: 'Invalid profession ID. Must be a UUID'
           });

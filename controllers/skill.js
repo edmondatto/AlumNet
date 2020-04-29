@@ -1,5 +1,5 @@
 const { Skill, User } = require('../models');
-const { isValid } = require('../utilities');
+const { helpers: { isValidUUID } } = require('../utilities');
 
 module.exports = {
   async fetchOrCreate (request, response, ) {
@@ -8,7 +8,7 @@ module.exports = {
 
     try {
       if (skillId) {
-        if (!isValid.uuid(skillId)) {
+        if (!isValidUUID(skillId)) {
           return response.status(400).send({
             msg: 'Invalid skill ID. Must be a UUID'
           });
@@ -80,7 +80,7 @@ module.exports = {
       skillIdsToDelete = skillIds;
     } else {
       return response.status(400).send({
-        msg: 'Bad request. Provide either an array of id(s) or a single id string'
+        msg: 'Provide either an array of ID(s) or a single ID string'
       });
     }
 
