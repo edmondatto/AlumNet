@@ -5,8 +5,8 @@ const logger = require('morgan');
 const fs = require('fs');
 const path = require('path');
 
-
 const app = express();
+app.disable('x-powered-by');
 const models = require('./models');
 
 // API Router Import
@@ -22,7 +22,7 @@ const {
 } = require('./routes');
 
 // API Custom Middleware Import
-const { userIsLoggedIn, errorHandler } = require('./middleware');
+const { userIsLoggedIn, errorHandler, routeNotImplemented } = require('./middleware');
 
 // Application Level Middleware
 app.use(bodyParser.json());
@@ -48,6 +48,7 @@ app.use('/streams', userIsLoggedIn, streamRouter);
 app.use('/users', userIsLoggedIn, userRouter);
 app.use('/skills', userIsLoggedIn, skillRouter);
 app.use('/professions', userIsLoggedIn, professionRouter);
+app.use(routeNotImplemented);
 
 // Catch-all Error handler
 app.use(errorHandler);
