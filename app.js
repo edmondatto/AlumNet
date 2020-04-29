@@ -1,6 +1,10 @@
 const express = require('express');
 require('dotenv').config();
 const bodyParser = require('body-parser');
+const logger = require('morgan');
+const fs = require('fs');
+const path = require('path');
+
 
 const app = express();
 const models = require('./models');
@@ -23,6 +27,17 @@ const { userIsLoggedIn, errorHandler } = require('./middleware');
 // Application Level Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: 'false'}));
+
+// Create Error Log File
+app.use(logger('combined', {
+  skip: function (request, response) { return response.statusCode < 400 },
+  stream: fs.createWriteStream(path.join(__dirname, 'errors.log'), { flags: 'a' })
+}));
+
+// Create Access Log File
+app.use(logger('combined', {
+  stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
+}));
 
 // API Routes
 app.use('/auth', authRouter);
