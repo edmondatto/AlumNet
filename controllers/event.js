@@ -1,6 +1,14 @@
 
 const { Event, Sequelize: { Op } } = require('../models');
-const { helpers: { isRequestBodyEmpty } } = require('../utils');
+const {
+  CONSTANTS,
+  helpers: {
+    isRequestBodyEmpty,
+    buildQuerySortMatrix,
+    buildIncludeMatrix ,
+    generatePaginationLinks,
+    generatePaginationResponse,
+  } } = require('../utils');
 
 module.exports = {
   async create (request, response, next) {
@@ -27,10 +35,31 @@ module.exports = {
 
   async fetchAll (request, response, next) {
     const { uid: currentUserId } = request.user;
-    const { group = true } = request.query;
+    const {
+      group = 'yes',
+      sort,
+      perPage: limit = CONSTANTS.DEFAULT_PAGE_LIMIT,
+      page = CONSTANTS.DEFAULT_PAGE_NUMBER,
+      q,
+      include,
+      startDate,
+      endDate,
+    } = request.query;
+
+    // Query pre-processing
+    const parsedLimit = parseInt(limit) < 1
+      ? CONSTANTS.DEFAULT_PAGE_LIMIT
+      : parseInt(limit) > 100
+        ? CONSTANTS.MAX_PAGE_LIMIT
+        : parseInt(limit);
+    const parsedPageNumber = parseInt(page);
+    const offset = parsedPageNumber > 0 ? (parsedPageNumber - 1) * limit : 0;
+    const toGroupEvents = group.toLowerCase()  === 'yes';
+    const sortMatrix = buildQuerySortMatrix(sort);
+    const includeAttributesMatrix = buildIncludeMatrix(include);
 
     try {
-      const events = await Event.findAll({
+      const {rows: events, count: totalCount} = await Event.findAndCountAll({
         where: {
           [Op.or]: [
             {
@@ -40,21 +69,48 @@ module.exports = {
               isPublished: false,
               organiserId: currentUserId
             }
-          ]
+          ],
+          ...q && {[Op.or]: [
+            {
+              title: {
+                [Op.iLike]: `%${q}%`
+              },
+            },
+            {
+              description: {
+                [Op.iLike]: `%${q}%`
+              },
+            }
+          ]},
+          ...startDate && {date: {
+            [Op.lt]: endDate || new Date(),
+            [Op.gt]: startDate
+          }},
         },
-        attributes: ['id', 'title', 'description', 'date', 'isPublished', 'coverImage', 'organiserId']
+        ...sortMatrix.length > 0 && { order: sortMatrix },
+        ...includeAttributesMatrix.length > 0 && { attributes: includeAttributesMatrix },
+        limit: parsedLimit,
+        offset,
       });
 
       const groupedEvents = {};
-      
-      if (group) {
+
+      if (toGroupEvents) {
         groupedEvents.userEvents = events.filter(event => event.organiserId === currentUserId);
         groupedEvents.publicEvents = events.filter(event => event.organiserId !== currentUserId);
       }
 
+      const totalPages = Math.ceil(totalCount/parsedLimit);
+      const paginationLinks = generatePaginationLinks(request.originalUrl, parsedPageNumber, totalPages);
+      const paginationResponse = generatePaginationResponse(paginationLinks, totalCount, totalPages);
+
+      response.links(paginationLinks);
+      response.set('X-Total-Count', totalCount);
+
       return response.status(200).send({
         msg: 'Events retrieved successfully',
-        events: group ? groupedEvents : events
+        events: toGroupEvents ? groupedEvents : events,
+        pagination: paginationResponse,
       });
     } catch (error) {
       next(error);
