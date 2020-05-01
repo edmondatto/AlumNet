@@ -1,4 +1,11 @@
-const { Post, Comment, Stream } = require('../models');
+const { Post, Comment, Stream, Sequelize: { Op } } = require('../models');
+const {
+  CONSTANTS,
+  helpers: {
+    processQueryString,
+    generatePaginationLinks,
+    generatePaginationResponse,
+  } } = require('../utils');
 
 module.exports = {
   async create (request, response, next) {
@@ -50,6 +57,46 @@ module.exports = {
   async fetchPosts (request, response, next) {
     const { uid: currentUserId }  = request.user;
     const { streamId } = request.params;
+    const {
+      sort,
+      perPage: limit = CONSTANTS.DEFAULT_PAGE_LIMIT,
+      page = CONSTANTS.DEFAULT_PAGE_NUMBER,
+      q,
+      include,
+      startDate,
+      endDate,
+      author,
+    } = request.query;
+
+    // Query pre-processing
+    const {
+      parsedLimit,
+      parsedPageNumber,
+      offset,
+      sortMatrix,
+      includeAttributesMatrix
+    } = processQueryString({ sort, limit, page, include });
+
+    const options = {
+      where: {
+        ...!streamId && { streamId: null },
+        ...q && {
+          content: {
+            [Op.iLike]: `%${q}%`
+          },
+        },
+        ...startDate && {createdAt: {
+          [Op.lt]: endDate || new Date(),
+          [Op.gt]: startDate
+        }},
+        ...author && { authorId: author },
+      },
+      // FIXME: Sort throws Group_By error for /api/streams/:streamId/posts
+      ...sortMatrix.length > 0 && { order: sortMatrix },
+      ...includeAttributesMatrix.length > 0 && { attributes: includeAttributesMatrix },
+      limit: parsedLimit,
+      offset,
+    };
 
     try {
       // Handle requests via /api/streams/:streamId/posts
@@ -71,18 +118,27 @@ module.exports = {
           })
         }
 
-        posts = await stream.getPosts();
-        totalCount = await stream.countPosts()
+        // TODO: avoid hitting the DB twice
+        posts = await stream.getPosts(options);
+        totalCount = await stream.countPosts(options)
       } else {
-        const { count , rows } = await Post.findAndCountAll({ where: { streamId: null } });
+        // Handle requests via /posts
+        const { count, rows } = await Post.findAndCountAll(options);
         posts = rows;
         totalCount = count;
       }
 
+      const totalPages = Math.ceil(totalCount/parsedLimit);
+      const paginationLinks = generatePaginationLinks(request.originalUrl, parsedPageNumber, totalPages);
+      const paginationResponse = generatePaginationResponse(paginationLinks, totalCount, totalPages);
+
+      response.links(paginationLinks);
+      response.set('X-Total-Count', totalCount);
+
       return response.status(200).send({
         msg: 'Posts retrieved successfully',
         posts,
-        totalCount
+        pagination: paginationResponse,
       });
     } catch (error) {
       next(error);
