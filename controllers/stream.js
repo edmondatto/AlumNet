@@ -1,4 +1,11 @@
-const { Stream, User } = require('../models');
+const { Stream, User, Sequelize: { Op } } = require('../models');
+const {
+  CONSTANTS,
+  helpers: {
+    processQueryString,
+    generatePaginationLinks,
+    generatePaginationResponse,
+  } } = require('../utils');
 
 module.exports = {
   async create (request, response, next) {
@@ -50,17 +57,65 @@ module.exports = {
   },
 
   async fetchAll (request, response, next) {
+    const {
+      sort,
+      perPage: limit = CONSTANTS.DEFAULT_PAGE_LIMIT,
+      page = CONSTANTS.DEFAULT_PAGE_NUMBER,
+      q,
+      include,
+      startDate,
+      endDate,
+    } = request.query;
+
+    // Query pre-processing
+    const {
+      parsedLimit,
+      parsedPageNumber,
+      offset,
+      sortMatrix,
+      includeAttributesMatrix
+    } = processQueryString({ sort, limit, page, include });
+
+    const options = {
+      where: {
+        isPrivate: false,
+        ...q && {[Op.or]: [
+          {
+            name: {
+              [Op.iLike]: `%${q}%`
+            },
+          },
+          {
+            description: {
+              [Op.iLike]: `%${q}%`
+            },
+          }
+        ]},
+        ...startDate && {createdAt: {
+          [Op.lt]: endDate || new Date(),
+          [Op.gt]: startDate
+        }},
+      },
+      ...sortMatrix.length > 0 && { order: sortMatrix },
+      ...includeAttributesMatrix.length > 0 && { attributes: includeAttributesMatrix },
+      limit: parsedLimit,
+      offset,
+    };
+
     try {
-      const {rows: streams, count: totalCount} = await Stream.findAndCountAll({
-        where: {
-          isPrivate: false
-        }
-      });
+      const {rows: streams, count: totalCount} = await Stream.findAndCountAll(options);
+
+      const totalPages = Math.ceil(totalCount/parsedLimit);
+      const paginationLinks = generatePaginationLinks(request.originalUrl, parsedPageNumber, totalPages);
+      const paginationResponse = generatePaginationResponse(paginationLinks, totalCount, totalPages);
+
+      response.links(paginationLinks);
+      response.set('X-Total-Count', totalCount);
 
       return response.status(200).send({
         msg: 'Streams retrieved successfully',
         streams,
-        totalCount
+        pagination: paginationResponse,
       });
     } catch (error) {
       next(error);
