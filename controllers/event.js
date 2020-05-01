@@ -4,8 +4,7 @@ const {
   CONSTANTS,
   helpers: {
     isRequestBodyEmpty,
-    buildQuerySortMatrix,
-    buildIncludeMatrix ,
+    processQueryString,
     generatePaginationLinks,
     generatePaginationResponse,
   } } = require('../utils');
@@ -47,16 +46,14 @@ module.exports = {
     } = request.query;
 
     // Query pre-processing
-    const parsedLimit = parseInt(limit) < 1
-      ? CONSTANTS.DEFAULT_PAGE_LIMIT
-      : parseInt(limit) > 100
-        ? CONSTANTS.MAX_PAGE_LIMIT
-        : parseInt(limit);
-    const parsedPageNumber = parseInt(page);
-    const offset = parsedPageNumber > 0 ? (parsedPageNumber - 1) * limit : 0;
     const toGroupEvents = group.toLowerCase()  === 'yes';
-    const sortMatrix = buildQuerySortMatrix(sort);
-    const includeAttributesMatrix = buildIncludeMatrix(include);
+    const {
+      parsedLimit,
+      parsedPageNumber,
+      offset,
+      sortMatrix,
+      includeAttributesMatrix
+    } = processQueryString({ sort, limit, page, include });
 
     try {
       const {rows: events, count: totalCount} = await Event.findAndCountAll({
