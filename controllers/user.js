@@ -1,16 +1,79 @@
-const { User, Post, Skill, Stream } = require('../models');
+const { User, Post, Skill, Stream, Sequelize: { Op } } = require('../models');
+const {
+  CONSTANTS,
+  helpers: {
+    processQueryString,
+    generatePaginationLinks,
+    generatePaginationResponse,
+  } } = require('../utils');
 
 module.exports = {
   async fetchAll (request, response, next) {
+    const {
+      sort,
+      perPage: limit = CONSTANTS.DEFAULT_PAGE_LIMIT,
+      page = CONSTANTS.DEFAULT_PAGE_NUMBER,
+      q,
+      include,
+      startDate,
+      endDate,
+      professionId,
+    } = request.query;
+
+    // Query pre-processing
+    const {
+      parsedLimit,
+      parsedPageNumber,
+      offset,
+      sortMatrix,
+      includeAttributesMatrix
+    } = processQueryString({ sort, limit, page, include });
+
+    const options = {
+      where: {
+        ...professionId && { professionId },
+        ...q && {[Op.or]: [
+            {
+              firstName: {
+                [Op.iLike]: `%${q}%`
+              },
+            },
+            {
+              lastName: {
+                [Op.iLike]: `%${q}%`
+              },
+            },
+            {
+              username: {
+                [Op.iLike]: `%${q}%`
+              },
+            }
+          ]},
+        ...startDate && {createdAt: {
+            [Op.lt]: endDate || new Date(),
+            [Op.gt]: startDate
+          }},
+      },
+      ...sortMatrix.length > 0 && { order: sortMatrix },
+      ...includeAttributesMatrix.length > 0 && { attributes: includeAttributesMatrix },
+      limit: parsedLimit,
+      offset,
+    };
+
     try {
-      const { rows: users, count: totalCount } = await User.findAndCountAll({
-        attributes: ['id', 'firstName', 'lastName', 'username', 'avatarUrl'],
-      });
+      const { rows: users, count: totalCount } = await User.findAndCountAll(options);
+
+      const totalPages = Math.ceil(totalCount/parsedLimit);
+      const paginationLinks = generatePaginationLinks(request.originalUrl, parsedPageNumber, totalPages);
+      const paginationResponse = generatePaginationResponse(paginationLinks, totalCount, totalPages);
+
+      response.links(paginationLinks);
+      response.set('X-Total-Count', totalCount);
 
       return response.status(200).send({
         msg: 'Users retrieved successfully',
-        totalCount,
-        users
+        users,
+        pagination: paginationResponse,
       });
     } catch (error) {
       next(error);
