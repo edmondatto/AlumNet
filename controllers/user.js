@@ -3,8 +3,7 @@ const {
   CONSTANTS,
   helpers: {
     processQueryString,
-    generatePaginationLinks,
-    generatePaginationResponse,
+    generatePaginationInfo,
   } } = require('../utils');
 
 module.exports = {
@@ -63,9 +62,10 @@ module.exports = {
     try {
       const { rows: users, count: totalCount } = await User.findAndCountAll(options);
 
-      const totalPages = Math.ceil(totalCount/parsedLimit);
-      const paginationLinks = generatePaginationLinks(request.originalUrl, parsedPageNumber, totalPages);
-      const paginationResponse = generatePaginationResponse(paginationLinks, totalCount, totalPages);
+      const {
+        paginationLinks,
+        paginationResponse
+      } = generatePaginationInfo(request.originalUrl, totalCount, parsedLimit, parsedPageNumber);
 
       response.links(paginationLinks);
       response.set('X-Total-Count', totalCount);

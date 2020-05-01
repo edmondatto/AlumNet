@@ -129,13 +129,25 @@ function processQueryString (partialRequestQueryBody) {
   };
 }
 
+/**
+ * Generates pagination info for the current request's result(s)
+ * @param {string} requestUrl - Url of current request
+ * @param {number} resultsCount - Total number of results from request
+ * @param {number} limit - Results requested per page
+ * @param {number} pageNumber - Requested page number
+ * @return {object} - Returns an object with the pagination info
+ */
+function generatePaginationInfo (requestUrl, resultsCount, limit, pageNumber) {
+  const totalPages = Math.ceil(resultsCount/limit);
+  const paginationLinks = generatePaginationLinks(requestUrl, pageNumber, totalPages);
+  const paginationResponse = generatePaginationResponse(paginationLinks, resultsCount, totalPages);
+
+  return { paginationLinks, paginationResponse };
+}
+
 module.exports = {
   isValidUUID,
   isRequestBodyEmpty,
-  buildQuerySortMatrix,
-  buildIncludeMatrix,
-  generatePaginationLinks,
-  generatePaginationResponse,
-  getParsedLimit,
   processQueryString,
+  generatePaginationInfo,
 };

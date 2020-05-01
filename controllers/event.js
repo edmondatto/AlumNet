@@ -5,8 +5,7 @@ const {
   helpers: {
     isRequestBodyEmpty,
     processQueryString,
-    generatePaginationLinks,
-    generatePaginationResponse,
+    generatePaginationInfo,
   } } = require('../utils');
 
 module.exports = {
@@ -35,7 +34,7 @@ module.exports = {
   async fetchAll (request, response, next) {
     const { uid: currentUserId } = request.user;
     const {
-      group = 'yes',
+      group = 'no',
       sort,
       perPage: limit = CONSTANTS.DEFAULT_PAGE_LIMIT,
       page = CONSTANTS.DEFAULT_PAGE_NUMBER,
@@ -97,9 +96,10 @@ module.exports = {
         groupedEvents.publicEvents = events.filter(event => event.organiserId !== currentUserId);
       }
 
-      const totalPages = Math.ceil(totalCount/parsedLimit);
-      const paginationLinks = generatePaginationLinks(request.originalUrl, parsedPageNumber, totalPages);
-      const paginationResponse = generatePaginationResponse(paginationLinks, totalCount, totalPages);
+      const {
+        paginationLinks,
+        paginationResponse
+      } = generatePaginationInfo(request.originalUrl, totalCount, parsedLimit, parsedPageNumber);
 
       response.links(paginationLinks);
       response.set('X-Total-Count', totalCount);
