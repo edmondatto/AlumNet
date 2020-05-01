@@ -1,5 +1,5 @@
 const { Skill, User } = require('../models');
-const { helpers: { isValidUUID } } = require('../utilities');
+const { helpers: { isValidUUID } } = require('../utils');
 
 module.exports = {
   async fetchOrCreate (request, response, ) {

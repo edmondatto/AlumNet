@@ -1,5 +1,6 @@
 
 const { Event, Sequelize: { Op } } = require('../models');
+const { helpers: { isRequestBodyEmpty } } = require('../utils');
 
 module.exports = {
   async create (request, response, next) {
@@ -90,13 +91,14 @@ module.exports = {
   },
 
   async update (request, response, next) {
-    // TODO: Extract as helper to check for empty body
-    const updateRequestParams = Object.keys(request.body);
-    if (updateRequestParams.length === 0) {
-      return response.status(400).send({
-        msg: 'No updates received'
-      });
+    const emptyRequestBodyResponse = isRequestBodyEmpty(request.body);
+
+    if (emptyRequestBodyResponse) {
+      const { status: statusCode, msg } = emptyRequestBodyResponse;
+      return response.status(statusCode).send({ msg });
     }
+
+    const updateRequestParams = Object.keys(request.body);
 
     if (updateRequestParams.includes('title') && !request.body.title) {
       return response.status(400).send({
