@@ -26,7 +26,77 @@ function isRequestBodyEmpty (requestBody) {
   return responseBody
 }
 
+/**
+ * Creates a sort matrix for queries
+ * @param {string} sortParams - Sort params from request.query
+ * @return {[]} - Returns the sort matrix
+ */
+function buildQuerySortMatrix (sortParams) {
+  if (!sortParams) return [];
+
+  const firstPassMatrix = [...sortParams.split(',')];
+  return firstPassMatrix.map(item => item.split(':'));
+}
+
+/**
+ * Creates a matrix for attributes to be included in a query response
+ * @param {string} includeParams - Sort params from request.query
+ * @return {[]} - Returns the include matrix
+ */
+function buildIncludeMatrix (includeParams) {
+  if (!includeParams) return [];
+  if (Array.isArray(includeParams)) return includeParams;
+
+  return includeParams.split(',');
+}
+
+/**
+ * Generates an object literal with Pagination Links
+ * @param {string} url - The Url of the current request
+ * @param {number} pageNumber - Current page number as per request
+ * @param {number} totalPages - Total number of pages of results returned
+ * @return {object} - Returns the set of pagination links
+ */
+function generatePaginationLinks (url, pageNumber, totalPages) {
+  return {
+    ...pageNumber > 1 && {
+      first: url.replace(`page=${pageNumber}`, `page=1`),
+      ...pageNumber - 1 > 1 && { previous: url.replace(`page=${pageNumber}`, `page=${pageNumber > 1 ? pageNumber - 1 : pageNumber}`) },
+    },
+    ...{ current: url },
+    ...pageNumber < totalPages && {
+      ...totalPages - pageNumber > 1 && { next: url.replace(`page=${pageNumber}`, `page=${pageNumber + 1}`) },
+      last: url.replace(`page=${pageNumber}`, `page=${totalPages}`)
+    },
+  };
+}
+
+/**
+ * Generates an JSON representation of the pagination links
+ * @param {object} paginationLinks - Object with pagination links
+ * @param {number} totalCount - Current page number as per request
+ * @param {number} totalPages - Total number of pages of results returned
+ * @return {object} - Returns the JSON pagination links
+ */
+function generatePaginationResponse (paginationLinks, totalCount, totalPages) {
+  const { first, previous, current, next, last } = paginationLinks;
+
+  return {
+    ...first && {first: { url: first } },
+    ...previous && {previous: { url: previous } },
+    ...{ current: { url: current } },
+    ...next && {next: { url: next } },
+    ...last && {last: { url: last } },
+    totalCount,
+    totalPages,
+  };
+}
+
 module.exports = {
   isValidUUID,
-  isRequestBodyEmpty
+  isRequestBodyEmpty,
+  buildQuerySortMatrix,
+  buildIncludeMatrix,
+  generatePaginationLinks,
+  generatePaginationResponse,
 };
