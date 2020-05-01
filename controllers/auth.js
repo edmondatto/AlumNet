@@ -29,7 +29,6 @@ module.exports = {
       }
 
       try {
-        // TODO: Possibly use userRecord.uid as PK in User Model
         const newUser = await User.create({
           email,
           id: userRecord.uid

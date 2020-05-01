@@ -141,7 +141,6 @@ module.exports = {
   },
 
   async update (request, response, next) {
-    // TODO: DRY up the code to check entities to be updated/deleted
     if (Object.keys(request.body).length === 0 || !request.body.content.length) {
       return response.status(400).send({
         msg: 'No updates received/Empty string'
