@@ -1,3 +1,5 @@
+const CONSTANTS  = require('./constants');
+
 /**
  * Checks whether an id is of the type UUID (versions 1 - 5), excluding NIL UUID*
  * @param {string} id - The id to be tested
@@ -92,6 +94,41 @@ function generatePaginationResponse (paginationLinks, totalCount, totalPages) {
   };
 }
 
+/**
+ * Parses a string representation of a page limit into an integer
+ * @param {string} limit - String representation of the page limit
+ * @return {number} - Returns the parsed limit
+ */
+function getParsedLimit (limit) {
+  return parseInt(limit) < 1
+    ? CONSTANTS.DEFAULT_PAGE_LIMIT
+    : parseInt(limit) > 100
+      ? CONSTANTS.MAX_PAGE_LIMIT
+      : parseInt(limit);
+}
+
+/**
+ * Processes a partial request query
+ * @param {object} partialRequestQueryBody - attributes from the request query
+ * @return {object} - Returns an object with the processed entities
+ */
+function processQueryString (partialRequestQueryBody) {
+  const { limit, page, sort, include } = partialRequestQueryBody;
+  const parsedLimit = limit && getParsedLimit(limit);
+  const parsedPageNumber = page && parseInt(page);
+  const offset = (parsedPageNumber && parsedLimit) && parsedPageNumber > 0 ? (parsedPageNumber - 1) * parsedLimit : 0;
+  const sortMatrix = buildQuerySortMatrix(sort);
+  const includeAttributesMatrix = buildIncludeMatrix(include);
+
+  return {
+    parsedLimit,
+    parsedPageNumber,
+    offset,
+    sortMatrix,
+    includeAttributesMatrix,
+  };
+}
+
 module.exports = {
   isValidUUID,
   isRequestBodyEmpty,
@@ -99,4 +136,6 @@ module.exports = {
   buildIncludeMatrix,
   generatePaginationLinks,
   generatePaginationResponse,
+  getParsedLimit,
+  processQueryString,
 };
