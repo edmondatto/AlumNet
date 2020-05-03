@@ -8,7 +8,10 @@ const admin = require('firebase-admin');
 const serviceAccount = require('../ServiceAccountKey.json');
 
 // Initialise firebase services
-admin.initializeApp({credential: admin.credential.cert(serviceAccount)});
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+});
 firebase.initializeApp(firebaseConfig);
 
 module.exports = {
