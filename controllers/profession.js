@@ -36,6 +36,8 @@ module.exports = {
       const [profession, created] = await Profession.findOrCreate({ where: { name } });
 
       if (created) {
+        response.set('Location', `${request.originalUrl}/${profession.id}`);
+
         return response.status(201).send({
           msg: 'Profession created successfully',
           profession

@@ -44,6 +44,8 @@ module.exports = {
         ...streamId && { streamId },
       });
 
+      response.set('Location', `${request.originalUrl}/${newPost.id}`);
+
       return response.status(201).send({
         msg: 'Post created successfully',
         post: newPost

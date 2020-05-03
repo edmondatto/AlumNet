@@ -39,6 +39,8 @@ module.exports = {
         authorId
       });
 
+      response.set('Location', `${request.originalUrl}/${comment.id}`);
+
       return response.status(201).send({
         msg: 'Comment created successfully',
         comment

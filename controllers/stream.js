@@ -45,6 +45,7 @@ module.exports = {
 
       const newStream = await Stream.create(request.body);
       await newStream.addUsers(newStreamInvitees);
+      response.set('Location', `${request.originalUrl}/${newStream.id}`);
 
       return response.status(201).send({
         msg: `Stream named ${name} created successfully`,

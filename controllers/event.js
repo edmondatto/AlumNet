@@ -22,6 +22,8 @@ module.exports = {
     try {
       const newEvent = await Event.create({...request.body, organiserId});
 
+      response.set('Location', `${request.originalUrl}/${newEvent.id}`);
+
       return response.status(201).send({
         msg: 'Event created successfully',
         post: newEvent

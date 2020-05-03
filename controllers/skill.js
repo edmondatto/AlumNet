@@ -37,6 +37,8 @@ module.exports = {
       const [skill, created] = await Skill.findOrCreate({where: { name } });
 
       if (created) {
+        response.set('Location', `${request.originalUrl}/${skill.id}`);
+
         return response.status(201).send({
           msg: 'Skill created successfully',
           skill

@@ -1,4 +1,4 @@
-const { User, Post, Skill, Stream, Sequelize: { Op } } = require('../models');
+const { User, Skill, Sequelize: { Op } } = require('../models');
 const {
   CONSTANTS,
   helpers: {
