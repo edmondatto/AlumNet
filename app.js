@@ -1,5 +1,6 @@
 const express = require('express');
 require('dotenv').config();
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
 const fs = require('fs');
@@ -24,7 +25,10 @@ const {
 // API Custom Middleware Import
 const { userIsLoggedIn, errorHandler, routeNotImplemented } = require('./middleware');
 
-// Application Level Middleware
+// CORS
+app.use(cors());
+
+// Body Parser Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: 'false'}));
 
